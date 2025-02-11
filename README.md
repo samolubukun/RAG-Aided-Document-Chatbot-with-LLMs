@@ -3,13 +3,14 @@
 
 A powerful document question-answering system that uses Retrieval-Augmented Generation (RAG) to process documents and generate answers based on their content, leveraging large language models (LLMs).
 
-![Screenshot (295)](https://github.com/user-attachments/assets/e1d18fd5-4e0e-46d2-a4db-6feab6c05421)
+![Screenshot (295)](https://github.com/user-attachments/assets/fb821916-e45d-4662-8de1-23bfd2bfafce)
 
-![Screenshot (292)](https://github.com/user-attachments/assets/fb255d47-e383-49ef-a8f4-47196f2c8243)
+![Screenshot (292)](https://github.com/user-attachments/assets/59c6da47-f4e6-4a90-b11e-6d2166f2cf9c)
 
-![Screenshot (293)](https://github.com/user-attachments/assets/0b1898a0-9bd5-4e12-84f2-5f3ab2b3d0c5)
+![Screenshot (293)](https://github.com/user-attachments/assets/2497519b-1a94-4fc2-89b8-e5d6cd05ed32)
 
-![Screenshot (294)](https://github.com/user-attachments/assets/1d246bd1-5abf-4b9c-890b-bb26659a84f7)
+![Screenshot (294)](https://github.com/user-attachments/assets/6f436e43-55eb-47e8-a9b9-52af709a4393)
+
 
 
 
