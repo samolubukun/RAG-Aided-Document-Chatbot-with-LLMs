@@ -1,0 +1,9 @@
+streamlit
+python-docx
+pypdf2
+python-pptx
+langchain
+langchain-community
+faiss-cpu
+sentence-transformers
+cohere
