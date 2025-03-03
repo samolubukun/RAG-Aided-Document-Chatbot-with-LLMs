@@ -1,4 +1,3 @@
-
 # RAG-Aided Document Chatbot with LLMs
 
 A powerful document question-answering system that uses Retrieval-Augmented Generation (RAG) to process documents and generate answers based on their content, leveraging large language models (LLMs).
