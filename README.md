@@ -10,9 +10,6 @@ A powerful document question-answering system that uses Retrieval-Augmented Gene
 
 ![Screenshot (294)](https://github.com/user-attachments/assets/6f436e43-55eb-47e8-a9b9-52af709a4393)
 
-
-
-
 ## Features
 - Upload documents in **PDF**, **PPTX**, or **DOCX** formats.
 - **RAG (Retrieval-Augmented Generation)** to extract relevant information from documents.
