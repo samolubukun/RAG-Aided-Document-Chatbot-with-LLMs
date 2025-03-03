@@ -10,14 +10,10 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.prompts import PromptTemplate
-
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
-
-# Access the variables
-import os
 os.environ['HuggingFaceHub_API_Token'] = os.getenv('HUGGINGFACEHUB_API_TOKEN')
 os.environ['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY')
 os.environ['cohere_api_key'] = os.getenv('COHERE_API_KEY')
@@ -59,38 +55,25 @@ def process_documents(uploaded_files):
         elif file.name.endswith('.docx'):
             all_text += extract_text_from_docx(file)
     
-    # Split text into chunks
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len,
-        separators=['\n', '\n\n', ' ', '']
+        chunk_size=1000, chunk_overlap=200, length_function=len, separators=['\n', '\n\n', ' ', '']
     )
     chunks = text_splitter.split_text(text=all_text)
     
-    # Create embeddings and vectorstore
     embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
     vectorstore = FAISS.from_texts(chunks, embedding=embeddings)
     return vectorstore
 
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
-
 def generate_answer(question, vectorstore):
     retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
-    
-    prompt_template = """Answer the question as precise as possible using the provided context. If the answer is
-                    not contained in the context, say "answer not available in context" \n\n
-                    Context: \n {context}?\n
-                    Question: \n {question} \n
-                    Answer:"""
+    prompt_template = """Answer the question as precisely as possible using the provided context. If the answer is
+                    not in the context, say "answer not available in context"\n\nContext:\n {context}?\nQuestion:\n {question} \nAnswer:"""
     
     prompt = PromptTemplate.from_template(template=prompt_template)
-    
     cohere_llm = Cohere(model="command", temperature=0.1, cohere_api_key=os.getenv('cohere_api_key'))
     
     rag_chain = (
-        {"context": retriever | format_docs, "question": RunnablePassthrough()}
+        {"context": retriever | (lambda docs: "\n\n".join(doc.page_content for doc in docs)), "question": RunnablePassthrough()}
         | prompt
         | cohere_llm
         | StrOutputParser()
@@ -98,27 +81,52 @@ def generate_answer(question, vectorstore):
     
     return rag_chain.invoke(question)
 
+def generate_mcqs(num_questions, vectorstore):
+    retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
+    prompt_template = """
+    Generate {num_questions} multiple-choice questions based on the provided context. Each question should have four options,
+    with one correct answer clearly indicated.
+    
+    Context:\n {context}\n
+    MCQs:
+    """
+    
+    prompt = PromptTemplate.from_template(template=prompt_template)
+    cohere_llm = Cohere(model="command", temperature=0.7, cohere_api_key=os.getenv('cohere_api_key'))
+    
+    mcq_chain = (
+        {"context": retriever | (lambda docs: "\n\n".join(doc.page_content for doc in docs)), "num_questions": RunnablePassthrough()}
+        | prompt
+        | cohere_llm
+        | StrOutputParser()
+    )
+    
+    return mcq_chain.invoke(num_questions)
+
 # Streamlit UI
-st.title("RAG-Aided Document Chatbot with LLMs")
+st.title("RAG-Aided Document Chatbot with MCQ Generation")
 
-# File upload
-uploaded_files = st.file_uploader("Upload your documents (PDF, PPTX, DOCX)", 
-                                 type=['pdf', 'pptx', 'docx'],
-                                 accept_multiple_files=True)
+uploaded_files = st.file_uploader("Upload your documents (PDF, PPTX, DOCX)", type=['pdf', 'pptx', 'docx'], accept_multiple_files=True)
 
-# Process button
 if uploaded_files and st.button("Process Documents"):
     with st.spinner("Processing documents..."):
         st.session_state.vectorstore = process_documents(uploaded_files)
     st.success("Documents processed successfully!")
 
-# Question input
 question = st.text_input("Ask a question about your documents:")
-
-# Generate answer
 if question and st.session_state.vectorstore is not None:
     with st.spinner("Generating answer..."):
         answer = generate_answer(question, st.session_state.vectorstore)
     st.write("Answer:", answer)
 elif question:
+    st.warning("Please upload and process documents first.")
+
+st.header("Generate MCQs")
+num_questions = st.number_input("Enter number of MCQs to generate:", min_value=1, max_value=20, value=5)
+if st.button("Generate MCQs") and st.session_state.vectorstore is not None:
+    with st.spinner("Generating MCQs..."):
+        mcqs = generate_mcqs(num_questions, st.session_state.vectorstore)
+    st.write("Generated MCQs:")
+    st.write(mcqs)
+elif st.button("Generate MCQs"):
     st.warning("Please upload and process documents first.")
